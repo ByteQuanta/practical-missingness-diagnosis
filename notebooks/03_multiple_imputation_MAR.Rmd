@@ -1,0 +1,91 @@
+---
+title: "Phase 6–7: Multiple Imputation under MAR"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(mice)
+library(broom)
+```
+
+
+```{r}
+mar_data <- read_csv("../data/raw/mar_data.csv")
+md.pattern(mar_data)
+```
+
+
+## 1. Multiple Imputation (PMM)
+```{r}
+imp_pmm <- mice(
+mar_data,
+m = 5,
+method = "pmm",
+seed = 123
+)
+```
+
+
+```{r}
+fit_pmm <- with(
+imp_pmm,
+lm(outcome ~ age + bmi + glucose + activity + heart_rate)
+)
+
+pooled_pmm <- pool(fit_pmm)
+summary(pooled_pmm)
+```
+
+
+## 2. Complete-Case Comparison
+```{r}
+cc_fit <- lm(
+outcome ~ age + bmi + glucose + activity + heart_rate,
+data = mar_data
+)
+
+summary(cc_fit)
+```
+
+
+## 3. Imputation Robustness Check
+```{r}
+imp_norm <- mice(
+mar_data,
+m = 5,
+method = "norm",
+seed = 123
+)
+
+fit_norm <- with(
+imp_norm,
+lm(outcome ~ age + bmi + glucose + activity + heart_rate)
+)
+
+summary(pool(fit_norm))
+```
+
+
+## 4. Interpretation Guide
+
+MI estimates are compared across imputation models
+
+Similar results → inference robust under MAR
+
+Divergent results → imputation model sensitivity
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

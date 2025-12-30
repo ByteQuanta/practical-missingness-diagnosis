@@ -1,0 +1,163 @@
+---
+title: "Phase 2–4: Missingness Diagnostics"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(naniar)
+library(visdat)
+library(pROC)
+library(mgcv)
+```
+
+
+```{r}
+mar_data  <- read_csv("../data/raw/mar_data.csv")
+mnar_data <- read_csv("../data/raw/mnar_data.csv")
+```
+
+
+## 1. Visual Missingness Diagnostics
+```{r}
+vis_miss(mar_data) + ggtitle("MAR data: missingness map")
+vis_miss(mnar_data) + ggtitle("MNAR data: missingness map")
+```
+
+
+```{r}
+md.pattern(mar_data)
+md.pattern(mnar_data)
+```
+
+
+## 2. Targeted Missingness Indicators
+```{r}
+mar_data <- mar_data %>%
+mutate(
+glucose_missing = as.integer(is.na(glucose)),
+neg_control = row_number() %% 2   # negative control variable
+)
+
+mnar_data <- mnar_data %>%
+mutate(
+glucose_missing = as.integer(is.na(glucose)),
+neg_control = row_number() %% 2
+)
+```
+
+
+
+## 3. Logistic Missingness Models (Multiple Specifications)
+```{r}
+## 3.1 Baseline logistic model
+mar_glm_base <- glm(
+glucose_missing ~ age + bmi + activity + heart_rate + neg_control,
+data = mar_data,
+family = binomial
+)
+
+mnar_glm_base <- glm(
+glucose_missing ~ age + bmi + activity + heart_rate + neg_control,
+data = mnar_data,
+family = binomial
+)
+
+summary(mar_glm_base)
+summary(mnar_glm_base)
+```
+
+
+
+```{r}
+## 3.2 Interaction-enriched logistic model
+mar_glm_int <- glm(
+glucose_missing ~ age * bmi + activity + heart_rate + neg_control,
+data = mar_data,
+family = binomial
+)
+
+mnar_glm_int <- glm(
+glucose_missing ~ age * bmi + activity + heart_rate + neg_control,
+data = mnar_data,
+family = binomial
+)
+
+summary(mar_glm_int)
+summary(mnar_glm_int)
+```
+
+
+
+```{r}
+## 3.3 Nonlinear (GAM) missingness model
+mar_gam <- gam(
+glucose_missing ~ s(age) + s(bmi) + activity + heart_rate + neg_control,
+data = mar_data,
+family = binomial
+)
+
+mnar_gam <- gam(
+glucose_missing ~ s(age) + s(bmi) + activity + heart_rate + neg_control,
+data = mnar_data,
+family = binomial
+)
+
+summary(mar_gam)
+summary(mnar_gam)
+```
+
+
+
+## 4. Predictive Diagnostics (AUC)
+```{r}
+mar_auc <- roc(mar_data$glucose_missing, fitted(mar_glm_base))
+mnar_auc <- roc(mnar_data$glucose_missing, fitted(mnar_glm_base))
+
+mar_auc
+mnar_auc
+```
+
+
+
+```{r}
+plot(mar_auc, main = "MAR missingness model ROC")
+plot(mnar_auc, main = "MNAR missingness model ROC")
+```
+
+
+
+## 5. Interpretation Guide
+Negative control (neg_control)
+
+Statistically significant effect → indicates potential model misspecification or spurious associations; missingness mechanism inference is unreliable.
+
+Non-significant effect → supports the adequacy of the missingness model specification.
+
+MAR data
+
+Missingness can be explained by observed covariates.
+
+Results are consistent across multiple model specifications, including interaction-enriched and nonlinear models.
+
+These findings are compatible with the Missing At Random (MAR) assumption.
+
+MNAR data
+
+Missingness is weakly explained or unexplained by observed covariates.
+
+Results are unstable or inconsistent across model specifications.
+
+This pattern provides evidence in favor of a Missing Not At Random (MNAR) mechanism.
+
+
+
+
+
+
+
+
+
+
+
+

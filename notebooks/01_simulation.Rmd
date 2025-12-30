@@ -1,0 +1,27 @@
+---
+title: "Phase 0–1: Controlled Simulation"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+source("../R/dgp.R")
+source("../R/inject_missingness.R")
+```
+
+
+
+```{r}
+complete_data <- generate_complete_data(n = 5000)
+mar_data  <- inject_mar(complete_data)
+mnar_data <- inject_mnar(complete_data)
+```
+
+
+```{r}
+write_csv(complete_data, "../data/reference/complete_data.csv")
+write_csv(mar_data, "../data/raw/mar_data.csv")
+write_csv(mnar_data, "../data/raw/mnar_data.csv")
+```
+
+

@@ -1,0 +1,98 @@
+---
+title: "Phase 8–9: MNAR Indicator Modeling and Sensitivity Analysis"
+output: html_document
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(broom)
+```
+
+
+```{r}
+mnar_data <- read_csv("../data/raw/mnar_data.csv") %>%
+mutate(glucose_missing = as.integer(is.na(glucose)))
+```
+
+
+## 1. Naive Complete-Case Model
+```{r}
+naive_fit <- lm(
+outcome ~ age + bmi + glucose + activity + heart_rate,
+data = mnar_data
+)
+
+summary(naive_fit)
+```
+
+
+## 2. Missingness Indicator Model
+```{r}
+indicator_fit <- lm(
+outcome ~ age + bmi + glucose_missing + activity + heart_rate,
+data = mnar_data
+)
+
+summary(indicator_fit)
+```
+
+
+## 3. Delta-Grid Sensitivity Analysis (Pattern-Mixture Style)
+```{r}
+deltas <- seq(-25, 0, by = 2)
+
+sens_results <- map_dfr(deltas, function(d) {
+
+dat <- mnar_data %>%
+mutate(
+glucose_shifted = if_else(
+is.na(glucose),
+mean(glucose, na.rm = TRUE) + d,
+glucose
+)
+)
+
+fit <- lm(
+outcome ~ age + bmi + glucose_shifted + activity + heart_rate,
+data = dat
+)
+
+tidy(fit) %>%
+filter(term == "glucose_shifted") %>%
+mutate(delta = d)
+})
+```
+
+
+```{r}
+sens_results
+```
+
+
+## 4. Tipping-Point Visualization
+```{r}
+ggplot(sens_results, aes(x = delta, y = estimate)) +
+geom_line() +
+geom_point() +
+geom_ribbon(
+aes(ymin = estimate - 1.96 * std.error,
+ymax = estimate + 1.96 * std.error),
+alpha = 0.2
+) +
+geom_hline(yintercept = 0, linetype = "dashed") +
+labs(
+title = "Sensitivity of Glucose Effect under MNAR Assumptions",
+subtitle = "Delta-adjusted pattern-mixture analysis",
+x = "Delta shift applied to missing glucose values",
+y = "Estimated effect of glucose on outcome"
+)
+```
+
+
+5. Interpretation Guide
+
+Stable sign and magnitude across wide delta range → results robust to MNAR departures
+
+Effect crosses zero at specific delta → tipping point
+
+Large sensitivity → substantive conclusions depend strongly on MNAR assumptions

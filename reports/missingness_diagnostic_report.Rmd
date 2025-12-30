@@ -1,0 +1,138 @@
+---
+title: "Practical Missingness Diagnosis: Stress-Testing MAR and MNAR Assumptions"
+author: " "
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## 1. Introduction
+
+Missing data is not merely a technical inconvenience but a fundamental inferential challenge.
+Standard approaches often default to imputation without explicitly reasoning about the underlying missingness mechanism. However, the validity of any downstream analysis critically depends on whether missingness assumptions—particularly Missing At Random (MAR)—are plausible.
+
+This project aims not to identify the true missingness mechanism, which is generally impossible using observed data alone, but to systematically stress-test competing assumptions and assess how analytical conclusions depend on them.
+
+The analysis proceeds by:
+
+Generating controlled MAR and MNAR scenarios,
+
+Evaluating the compatibility of observed data with MAR assumptions,
+
+Selecting modeling strategies consistent with these assumptions,
+
+Quantifying sensitivity to unverifiable MNAR departures.
+
+## 2. Conceptual Framework
+### 2.1 Missingness mechanisms
+
+We adopt the standard taxonomy:
+
+MCAR: Missingness independent of all variables
+
+MAR: Missingness depends only on observed variables
+
+MNAR: Missingness depends on unobserved values, including the missing variable itself
+
+Crucially, MAR and MNAR are not empirically identifiable without additional assumptions.
+Accordingly, this project avoids claims of mechanism detection and instead focuses on assumption plausibility and robustness.
+
+### 2.2 Analytical philosophy
+
+The guiding principle is:
+
+Unverifiable assumptions should be made explicit, stress-tested, and accompanied by sensitivity analysis rather than silently imposed.
+
+All diagnostic procedures are therefore interpreted as compatibility checks, not formal tests.
+
+## 3. Data Generating Process and Simulation Design
+
+A complete synthetic dataset is generated to resemble health and sensor-style data, including variables such as age, BMI, activity, heart rate, glucose, and a continuous outcome.
+
+From this common data-generating process:
+
+A MAR dataset is created by inducing missingness in glucose conditional on observed covariates.
+
+A MNAR dataset is created by inducing missingness directly dependent on the (unobserved) glucose values.
+
+The purpose of this simulation is didactic, not validation-oriented.
+The analysis does not claim generalizability beyond illustrating how different analytical decisions behave under known mechanisms.
+
+## 4. Missingness Diagnostics
+### 4.1 Visual and pattern-based exploration
+
+Initial diagnostics include:
+
+Missingness maps,
+
+Missingness pattern tables.
+
+These tools serve to identify gross structure but are insufficient for mechanism assessment.
+
+### 4.2 Targeted missingness modeling
+
+A missingness indicator for glucose is constructed and modeled as a function of observed covariates using multiple specifications:
+
+Baseline logistic regression,
+
+Interaction-enriched models,
+
+Nonlinear GAMs.
+
+A synthetic negative control variable is included as a sanity check for gross model misspecification, not as a formal falsification test.
+
+Predictive metrics (e.g., AUC) are used solely to assess whether missingness is systematically related to observed variables, not to infer causal mechanisms.
+
+### 4.3 Interpretation of diagnostic results
+
+In the MAR dataset, missingness is consistently associated with observed covariates across model specifications, indicating compatibility with MAR.
+
+In the MNAR dataset, missingness remains weakly explained and unstable across models, suggesting failure to explain missingness using observed data.
+
+Importantly, these findings do not constitute proof of MNAR; they merely indicate that MAR cannot be comfortably justified.
+
+## 5. Analytical Decisions Based on Diagnostics
+### 5.1 MAR pathway: Multiple imputation
+
+For the MAR dataset, multiple imputation using chained equations is employed.
+Inference is pooled across imputations and compared against complete-case analysis.
+
+Multiple imputation models are varied to assess robustness to imputation model choice.
+
+### 5.2 MNAR pathway: Sensitivity analysis
+
+For the MNAR dataset, imputation under MAR is deliberately avoided.
+
+Instead:
+
+A naive complete-case model,
+
+A missingness indicator model (included as a pedagogical foil),
+
+A pattern-mixture–style delta sensitivity analysis
+
+are used to examine how conclusions change under alternative MNAR assumptions.
+
+The sensitivity analysis evaluates a grid of plausible shifts applied to missing glucose values and identifies tipping points where substantive conclusions change.
+
+## 6. Limitations and Scope
+
+Several limitations are acknowledged explicitly:
+
+Missingness mechanisms are not identifiable from observed data.
+
+Diagnostic models assess predictability, not causality.
+
+Sensitivity analysis explores a limited class of MNAR mechanisms (location shifts).
+
+Negative controls are synthetic and serve only as sanity checks.
+
+Uncertainty in missingness diagnostics is not formally propagated into downstream inference.
+
+These limitations are not treated as flaws but as structural features of the missing data problem.
+
+## 7. Conclusion
+
+This project demonstrates a principled approach to missing data analysis that prioritizes transparency over certainty. Rather than attempting to resolve missingness mechanisms, it provides a structured framework for reasoning under uncertainty, aligning modeling choices with explicitly stated assumptions.
+
+The primary contribution lies not in methodological novelty, but in making assumptions visible, stress-tested, and central to analytical decision-making.
+
