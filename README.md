@@ -62,7 +62,7 @@ Missing data is not a nuisance to be cleaned, but an assumption to be reasoned a
 This project provides a practical template for doing exactly that.
 
 ## Repository Structure
----
+```
 missingness_diagnosis/
 ├── data/
 │   ├── raw/
@@ -81,4 +81,4 @@ missingness_diagnosis/
 ├── reports/
 │   └── missingness_diagnostic_report.Rmd
 └── README.md
----
+```
